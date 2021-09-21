@@ -1,0 +1,14 @@
+# Ignore database files
+*.db
+*.db-journal
+
+# Ignore virtualenv and specific IDE files
+.venv
+__pycache__
+.vscode
+
+# Ignore token file
+lib/bot/token.0
+
+# Some tutorial only things
+images
