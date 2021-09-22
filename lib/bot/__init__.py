@@ -5,7 +5,7 @@ from asyncio import sleep
 from discord import Intents, TextChannel, Message
 # from discord import Embed, File
 from discord.ext.commands import Bot as BotBase
-from discord.ext.commands import Context, CommandNotFound, BadArgument, MissingRequiredArgument
+from discord.ext.commands import Context, CommandNotFound, BadArgument, MissingRequiredArgument, CommandOnCooldown
 from discord.errors import HTTPException, Forbidden
 
 # from datetime import datetime
@@ -16,7 +16,7 @@ from lib.db import db
 PREFIX = '?'
 OWNER_IDS = [341671286415687692]
 COGS = [path.split('\\')[-1][:-3] for path in glob('./lib/cogs/*.py')]
-IGNORE_EXCEPTIONS = (CommandNotFound, BadArgument)
+IGNORE_EXCEPTIONS = (CommandNotFound, BadArgument, CommandNotFound)
 
 
 class Ready(object):
@@ -85,15 +85,21 @@ class Bot (BotBase):
         
         elif isinstance(exc, MissingRequiredArgument):
             await ctx.send('One or more required arguments were missed.')
-            
-        elif isinstance(exc.original, Forbidden):
-            await ctx.send('You do not have permission to do this.')
         
-        elif isinstance(exc.original, HTTPException):
-            await ctx.send('Unable to send message.')
+        elif isinstance(exc, CommandOnCooldown):
+            await ctx.send(f'This command on cooldown. Try againt in {exc.retry_after:,.2f} secs.')
+            
+        elif hasattr(exc, 'original'):
+            if isinstance(exc.original, Forbidden):
+                await ctx.send('You do not have permission to do this.')
+        
+            elif isinstance(exc.original, HTTPException):
+                await ctx.send('Unable to send message.')
+            
+            else: raise exc.original
         
         else:
-            raise exc.original
+            raise exc
 
     async def on_ready(self):
         if not self.ready:
