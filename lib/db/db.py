@@ -24,7 +24,7 @@ def build():
 
 def commit():
     cxn.commit()
-    print('Commiting database...')
+    print('[INFO] Commiting database...')
     
 
 def autosave(sched):
