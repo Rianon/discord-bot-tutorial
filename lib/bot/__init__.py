@@ -1,39 +1,45 @@
+from unicodedata import name
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from asyncio import sleep
 
 from discord import Intents, TextChannel, Message
-# from discord import Embed, File
 from discord.ext.commands import Bot as BotBase
-from discord.ext.commands import Context, CommandNotFound, BadArgument, MissingRequiredArgument, CommandOnCooldown
+from discord.ext.commands import CommandNotFound, BadArgument, MissingRequiredArgument, CommandOnCooldown
 from discord.errors import HTTPException, Forbidden
+from discord.ext.commands import Context, when_mentioned_or
 
-# from datetime import datetime
 from glob import glob
 
 from lib.db import db
 
-PREFIX = '?'
 OWNER_IDS = [341671286415687692]
 COGS = [path.split('\\')[-1][:-3] for path in glob('./lib/cogs/*.py')]
 IGNORE_EXCEPTIONS = (CommandNotFound, BadArgument, CommandNotFound)
+
+
+def get_prefix(bot, message):
+    sql_query = 'SELECT Prefix FROM guilds WHERE GuildID = ?'
+    sql_data = message.guild.id
+    prefix = db.field(sql_query, sql_data)
+    return when_mentioned_or(prefix)(bot, message)
 
 
 class Ready(object):
     def __init__(self) -> None:
         for cog in COGS:
             setattr(self, cog, False)
-    
+
     def ready_up(self, cog):
         setattr(self, cog, True)
         print(f'[INFO] {cog} cog ready.')
-    
+
     def all_ready(self):
         return all([getattr(self, cog) for cog in COGS])
 
+
 class Bot (BotBase):
     def __init__(self):
-        self.PREFIX = PREFIX
         self.ready = False
         self.cogs_ready = Ready()
         self.guild = None
@@ -42,11 +48,11 @@ class Bot (BotBase):
         db.autosave(self.scheduler)
 
         super().__init__(
-            command_prefix=PREFIX,
+            command_prefix=get_prefix,
             owner_ids=OWNER_IDS,
             intents=Intents.all()
         )
-    
+
     def setup(self):
         for cog in COGS:
             self.load_extension(f'lib.cogs.{cog}')
@@ -54,13 +60,10 @@ class Bot (BotBase):
 
     def run(self, version):
         self.VERSION = version
-
         print('[INFO] Setting up cogs...')
         self.setup()
-        
         with open('./lib/bot/token.0', 'r', encoding='utf-8') as tf:
             self.TOKEN = tf.read()
-
         print('[INFO] Running bot...')
         super().run(self.TOKEN, reconnect=True)
 
@@ -82,51 +85,26 @@ class Bot (BotBase):
     async def on_command_error(self, ctx: Context, exc):
         if any([isinstance(exc, error) for error in IGNORE_EXCEPTIONS]):
             pass
-        
         elif isinstance(exc, MissingRequiredArgument):
             await ctx.send('One or more required arguments were missed.')
-        
         elif isinstance(exc, CommandOnCooldown):
             await ctx.send(f'This command on cooldown. Try againt in {exc.retry_after:,.2f} secs.')
-            
         elif hasattr(exc, 'original'):
             if isinstance(exc.original, Forbidden):
                 await ctx.send('You do not have permission to do this.')
-        
             elif isinstance(exc.original, HTTPException):
                 await ctx.send('Unable to send message.')
-            
-            else: raise exc.original
-        
+            else:
+                raise exc.original
         else:
             raise exc
 
     async def on_ready(self):
+        self.guild = self.get_guild(823649821679681546)
+        self.scheduler.add_job(self.rules_reminder, CronTrigger(
+            day_of_week=0, hour=12, minute=0, second=0))
+        self.scheduler.start()
         if not self.ready:
-            self.guild = self.get_guild(823649821679681546)
-            self.scheduler.add_job(self.rules_reminder, CronTrigger(
-                day_of_week=0, hour=12, minute=0, second=0))
-            self.scheduler.start()
-            
-            # channel: TextChannel = self.guild.system_channel
-            # await channel.send('Bot is online!')
-            # embed = Embed(title='Now online!',
-            #               description='Bot is online now.',
-            #               colour=0xFF0000,
-            #               timestamp=datetime.utcnow())
-            # fields = [('Name.', 'Value.', True),
-            #           ('Another name.', 'This is inline field.', True),
-            #           ('Final name', 'This is not inline field.', False)
-            # ]
-            # for name, value, inline in fields:
-            #     embed.add_field(name=name, value=value, inline=inline)
-            # embed.set_footer(text='This is footer.')
-            # embed.set_author(name='Rianon SorrowShine', icon_url=self.guild.icon_url)
-            # embed.set_thumbnail(url=self.guild.icon_url)
-            # embed.set_image(url=self.guild.icon_url)
-
-            # await channel.send(embed=embed)
-            # await channel.send(file=File(fp='/images/ava.png'))
             while not self.cogs_ready.all_ready():
                 await sleep(0.5)
             self.ready = True

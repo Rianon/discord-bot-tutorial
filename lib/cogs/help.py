@@ -55,12 +55,14 @@ class Help(Cog):
         if not self.bot.ready:
             self.bot.cogs_ready.ready_up('help')
 
-    @command(name='help', aliases=['h'])
+    @command(name='help', aliases=['h'], brief='Shows help on commands.')
     async def __show_help(self, ctx: Context, cmd: Optional[str]):
         """Shows help on commands."""
+        await ctx.message.delete()
         if cmd is None:
             menu = MenuPages(source=HelpMenu(ctx, list(self.bot.commands)),
                              delete_message_after=True,
+                             clear_reactions_after=True,
                              timeout=60.0)
             await menu.start(ctx)
         else:

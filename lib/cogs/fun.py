@@ -17,14 +17,14 @@ class Fun(Cog):
         if not self.bot.ready:
             self.bot.cogs_ready.ready_up('fun')
 
-    @command(name='hello', aliases=['hi'])
+    @command(name='hello', aliases=['hi'], brief='ays hello to user.')
     async def __say_hello(self, ctx: Context):
         """Says hello to user."""
         await ctx.message.delete()
         author: Member = ctx.author
         await ctx.send(f'Hello, {author.mention}')
 
-    @command(name='dice', aliases=['roll'])
+    @command(name='dice', aliases=['roll'], brief='Rolling specified number of dice.')
     @cooldown(1, 60, BucketType.user)
     async def __roll_dice(self, ctx: Context, dice_string: str):
         """Rolling specified number of dice."""
@@ -38,14 +38,14 @@ class Fun(Cog):
         else:
             await ctx.send('The final result is too long, try a lower number of dice or/and smaller dice.')
 
-    @command(name='slap', aliases=['hit'])
+    @command(name='slap', aliases=['hit'], brief='Slaps specified user.')
     async def __slap(self, ctx: Context, member: Union[Member, Role], *, reason: Optional[str] = 'no reason'):
         """Slaps specified user."""
         await ctx.message.delete()
         author: Member = ctx.author
         await ctx.send(f'{author.mention} slapped {member.mention} for {reason}.')
 
-    @command(name='fact')
+    @command(name='fact', brief='Tells a random fact about specified animal. Default is a cat.')
     async def __animal_fact(self, ctx: Context, animal: str = 'cat'):
         """Tells a random fact about specified animal. Default is a cat."""
         await ctx.message.delete()
