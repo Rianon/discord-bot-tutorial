@@ -106,7 +106,7 @@ class Bot (BotBase):
         self.scheduler.start()
         if not self.ready:
             while not self.cogs_ready.all_ready():
-                await sleep(0.5)
+                await sleep(0.2)
             self.ready = True
             print('[INFO] Bot is ready.')
         else:
