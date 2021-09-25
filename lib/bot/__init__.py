@@ -5,7 +5,7 @@ from asyncio import sleep
 
 from discord import Intents, TextChannel, Message
 from discord.ext.commands import Bot as BotBase
-from discord.ext.commands import CommandNotFound, BadArgument, MissingRequiredArgument, CommandOnCooldown
+from discord.ext.commands import CommandNotFound, BadArgument, MissingRequiredArgument, CommandOnCooldown, CheckFailure
 from discord.errors import HTTPException, Forbidden
 from discord.ext.commands import Context, when_mentioned_or
 
@@ -15,7 +15,7 @@ from lib.db import db
 
 OWNER_IDS = [341671286415687692]
 COGS = [path.split('\\')[-1][:-3] for path in glob('./lib/cogs/*.py')]
-IGNORE_EXCEPTIONS = (CommandNotFound, BadArgument, CommandNotFound)
+IGNORE_EXCEPTIONS = (CommandNotFound, BadArgument)
 
 
 def get_prefix(bot, message):
