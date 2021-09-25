@@ -21,6 +21,8 @@ class Info(Cog):
     @command(name='userinfo', aliases=['ui', 'mi', 'member info'], brief='Shows user info.')
     async def __show_user_info(self, ctx: Context, target: Optional[Member]):
         """Shows user info."""
+        await ctx.message.delete()
+        
         target = target or ctx.author
         
         embed = Embed(title='User information',
@@ -48,6 +50,8 @@ class Info(Cog):
     @command(name='serverinfo', aliases=['si', 'gi', 'guildinfo'], brief='Shows server info.')
     async def __show_server_info(self, ctx: Context):
         """Shows server info."""
+        await ctx.message.delete()
+        
         embed = Embed(title='Server information',
                       colour=ctx.guild.owner.colour,
                       timestamp=datetime.utcnow())

@@ -1,8 +1,7 @@
-from discord import Member, TextChannel, Embed, Message, AuditLogAction
+from discord import Member, TextChannel, Embed, Message
 from discord.ext.commands import Cog
 
 from datetime import datetime
-
 from lib.bot import Bot
 
 class Log(Cog):
@@ -24,21 +23,27 @@ class Log(Cog):
                             description=f'{before.mention} nickname was changed',
                             colour=0x00FF00,
                             timestamp=datetime.utcnow())
+                
                 embed.add_field(name='Before:', value=before.display_name)
                 embed.add_field(name='After:', value=after.display_name)
+                
                 await self.log_channel.send(embed=embed)
+            
             elif before.roles != after.roles:
                 embed = Embed(title='Member update',
                             description=f'{before.mention} roles was changed',
                             colour=0x00FF00,
                             timestamp=datetime.utcnow())
+                
                 if len(before.roles) > len(after.roles):
                     action = 'Removed '
                     roles = [r for r in before.roles if r not in after.roles]
                 else:
                     action = 'Added '
                     roles = [r for r in after.roles if r not in before.roles]
+                
                 embed.add_field(name=action, value=', '.join(r.mention for r in roles), inline=False)
+                
                 await self.log_channel.send(embed=embed)
     
     @Cog.listener()
@@ -48,26 +53,22 @@ class Log(Cog):
                 embed = Embed(title=f'Message was edited',
                             colour=0x00FF00,
                             timestamp=datetime.utcnow())
+                
                 embed.add_field(name='Before:', value=before.content, inline=False)
                 embed.add_field(name='After:', value=after.content, inline=False)
                 embed.set_footer(text=f'Edited by {after.author.display_name}')
+                
                 await self.log_channel.send(embed=embed)
     
     @Cog.listener()
     async def on_message_delete(self, message: Message):
-        if not message.author.bot:
-            embed = Embed(title=f'Message was deleted',
-                            colour=0x00FF00,
-                            timestamp=datetime.utcnow())
-            embed.add_field(name='Content:', value=message.content, inline=False)
-            # embed.set_footer(text=f'Deleted by {message.author.display_name}')
-            # async for entry in self.log_channel.guild.audit_logs(action=AuditLogAction.message_delete, limit=1):
-            #     if entry.created_at <= datetime.utcnow():
-            #         if entry.target.id == message.author.id:
-            #             embed.set_footer(text=f'Deleted by {entry.user.display_name}')
-            #         else:
-            #             embed.set_footer(text=f'Deleted by {message.author.display_name}')
-            await self.log_channel.send(embed=embed)
+        embed = Embed(title=f'Message was deleted',
+                        colour=0x00FF00,
+                        timestamp=datetime.utcnow())
+        
+        embed.add_field(name='Content:', value=message.content or 'Image/Embed', inline=False)
+        
+        await self.log_channel.send(embed=embed)
                 
 def setup(bot: Bot):
     bot.add_cog(Log(bot))
