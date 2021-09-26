@@ -1,10 +1,14 @@
-import discord
-from discord.ext.commands import Cog, Context, command, has_permissions
+from discord import Embed, Member, Message
+from discord.ext.commands import (Cog, Context,
+                                  Greedy,
+                                  command, has_permissions, bot_has_permissions)
 from discord.ext.commands.errors import MissingPermissions
 
 from lib.bot import Bot
 from lib.db import db
 
+from typing import Optional
+from datetime import datetime, timedelta
 
 class Utility(Cog):
     def __init__(self, bot: Bot):
@@ -15,24 +19,32 @@ class Utility(Cog):
         if not self.bot.ready:
             self.bot.cogs_ready.ready_up('utility')
 
-    @command(name='clear', aliases=['cl'], brief='Clears specified number of messages. Default is 10.')
+    @command(name='clear', aliases=['cl', 'purge'], brief='Clears messages from users.')
     @has_permissions(manage_messages=True)
-    async def __clear_message(self, ctx: Context, amount: int = 10):
-        """Clears specified number of messages. Default is 10."""
-        await ctx.message.delete()
-
-        deleted = await ctx.channel.purge(limit=amount)
-        embed = discord.Embed(title=f'{len(deleted)} message(s) has been deleted.',
-                              color=0x00FF00)
+    @bot_has_permissions(manage_messages=True, read_message_history=True)
+    async def __clear_message(self, ctx: Context, targets: Greedy[Member], amount: Optional[int] = 1):
+        """Clears provided number of messages (default is 1) from profided list of members."""
+        def _check(message: Message) -> bool:
+            return not len(targets) or message.author in targets
         
-        await ctx.send(embed=embed, delete_after=5)
-
-        print(f'[SUCCESS] {len(deleted)} message(s) has been deleted.')
+        if 1 <= amount <= 1000:
+            async with ctx.channel.typing():
+                await ctx.message.delete()
+                deleted = await ctx.channel.purge(limit=amount,
+                                                  check=_check,
+                                                  after=datetime.utcnow() - timedelta(days=14))
+                embed = Embed(title=f'{len(deleted):,} message(s) has been deleted.',
+                                    color=0x00FF00)
+                
+                await ctx.send(embed=embed, delete_after=5)
+                print(f'[SUCCESS] {len(deleted)} message(s) has been deleted.')
+        else:
+            await ctx.send('The amount provided is not within acceptable range. Must be [1...1000].')
     
     @__clear_message.error
     async def clear_message_error(self, ctx: Context, error):
         if isinstance(error, MissingPermissions):
-            await ctx.send('Action forbidden, you have no **<manage messages>** permission.')
+            await ctx.send('Action forbidden, **<manage messages>** and **<read_message_history>** permissions needed.')
 
     @command(name='prefix', aliases=['pre', 'p'], brief='Changes command prefix.')
     @has_permissions(manage_guild=True)

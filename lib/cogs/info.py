@@ -44,6 +44,7 @@ class Info(Cog):
         embed.add_field(name='Created at', value=target.created_at.strftime('%d/%m/%Y %H:%M:%S'), inline=True)
         embed.add_field(name='Joined at', value=target.joined_at.strftime('%d/%m/%Y %H:%M:%S'), inline=True)
         embed.add_field(name='Boosted', value=bool(target.premium_since), inline=True)
+        embed.set_thumbnail(url=target.avatar_url)
         
         await ctx.send(embed=embed)
     
@@ -64,7 +65,7 @@ class Info(Cog):
         
         embed.add_field(name='ID', value=ctx.guild.id, inline=True)
         embed.add_field(name='Owner', value=ctx.guild.owner, inline=True)
-        embed.add_field(name='Region', value=ctx.guild.region, inline=True)
+        embed.add_field(name='Region', value=str(ctx.guild.region).title(), inline=True)
         embed.add_field(name='Created at', value=ctx.guild.created_at.strftime('%d/%m/%Y %H:%M:%S'), inline=True)
         embed.add_field(name='Members', value=len(ctx.guild.members), inline=True)
         embed.add_field(name='Humans', value=len(list(filter(lambda m: not m.bot, ctx.guild.members))), inline=True)
@@ -77,6 +78,7 @@ class Info(Cog):
         embed.add_field(name='Roles', value=len(ctx.guild.roles), inline=True)
         embed.add_field(name='Invites', value=len(await ctx.guild.invites()), inline=True)
         embed.add_field(name='\u200b', value='\u200b', inline=True)
+        embed.set_thumbnail(url=ctx.guild.icon_url)
         
         await ctx.send(embed=embed)
 

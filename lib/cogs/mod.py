@@ -77,7 +77,7 @@ class Mod(Cog):
     @__ban_member.error
     async def ban_member_error(self, ctx: Context, error):
         if isinstance(error, MissingPermissions):
-            await ctx.send('Action forbidden, you have no **<ban members>** permission.')
+            await ctx.send('Action forbidden, **<ban members>** permission needed.')
         elif isinstance(ctx, BotMissingPermissions):
             await ctx.send('Action forbidden, this bot has no **<ban members>** permission.')
 
