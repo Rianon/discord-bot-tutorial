@@ -1,8 +1,9 @@
+from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from asyncio import sleep
 
-from discord import Intents, TextChannel, Message
+from discord import Intents, TextChannel, Message, DMChannel, Embed, Member
 from discord.ext.commands import Bot as BotBase
 from discord.ext.commands import (CommandNotFound,
                                   BadArgument,
@@ -10,7 +11,7 @@ from discord.ext.commands import (CommandNotFound,
                                   CommandOnCooldown,
                                   CheckFailure)
 from discord.errors import HTTPException, Forbidden
-from discord.ext.commands import (Context,
+from discord.ext.commands import (Context, Cog,
                                   when_mentioned_or)
 
 from glob import glob
@@ -120,9 +121,24 @@ class Bot (BotBase):
             print('[INFO] Bot reconnected.')
 
     async def on_message(self, message: Message):
-        if message.author.bot:
-            return
-        await self.process_commands(message)
+        if not message.author.bot:
+            if isinstance(message.channel, DMChannel):
+                if (len(message.content) < 50):
+                    await message.channel.send('Your message should be at least 50 characters in length')
+                else:
+                    member: Member = self.guild.get_member(message.author.id)
+                    embed = Embed(title='Modmail',
+                                  colour=member.colour,
+                                  timestamp=datetime.utcnow())
+                    
+                    embed.set_thumbnail(url=member.avatar_url)
+                    embed.add_field(name='Member', value=member, inline=False)
+                    embed.add_field(name='Message', value=message.content, inline=False)
+                    
+                    mod: Cog = self.get_cog('Mod')
+                    await mod.log_channel.send(embed=embed)
+            else:
+                await self.process_commands(message)
 
 
 bot = Bot()
