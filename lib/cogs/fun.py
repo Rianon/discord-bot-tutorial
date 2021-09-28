@@ -1,6 +1,7 @@
 from typing import Optional, Union
 
-from discord.ext.commands import Cog, Context, BucketType, command, cooldown
+from discord.ext.commands import (Cog, Context, BucketType,
+                                  command, cooldown)
 from discord import Member, Role, Embed
 
 from random import randint
@@ -18,18 +19,18 @@ class Fun(Cog):
         if not self.bot.ready:
             self.bot.cogs_ready.ready_up('fun')
 
-    @command(name='hello', aliases=['hi'], brief='ays hello to user.')
-    async def __say_hello(self, ctx: Context):
-        """Says hello to user."""
+    @command(name='hello', aliases=['hi'], brief='Says hello to the user.')
+    async def say_hello(self, ctx: Context):
+        """Says hello to the user."""
         await ctx.message.delete()
         
         author: Member = ctx.author
         await ctx.send(f'Hello, {author.mention}')
 
-    @command(name='dice', aliases=['roll'], brief='Rolling specified number of dice.')
+    @command(name='dice', aliases=['roll'], brief='Rolling dice.')
     @cooldown(1, 60, BucketType.user)
-    async def __roll_dice(self, ctx: Context, dice_string: str):
-        """Rolling specified number of dice."""
+    async def roll_dice(self, ctx: Context, dice_string: str):
+        """Rolling NdM dice, where N is an amount of dice and M is a number of die sides."""
         await ctx.message.delete()
         
         dice, value = dice_string.split('d')
@@ -42,17 +43,17 @@ class Fun(Cog):
         else:
             await ctx.send('The final result is too long, try a lower number of dice or/and smaller dice.')
 
-    @command(name='slap', aliases=['hit'], brief='Slaps specified user.')
-    async def __slap(self, ctx: Context, member: Union[Member, Role], *, reason: Optional[str] = 'no reason'):
-        """Slaps specified user."""
+    @command(name='slap', aliases=['hit'], brief='Slaps the user.')
+    async def slap(self, ctx: Context, member: Union[Member, Role], *, reason: Optional[str] = 'no reason'):
+        """Slaps the provided user."""
         await ctx.message.delete()
         
         author: Member = ctx.author
         await ctx.send(f'{author.mention} slapped {member.mention} for {reason}.')
 
-    @command(name='fact', brief='Tells a random fact about specified animal. Default is a cat.')
-    async def __animal_fact(self, ctx: Context, animal: str = 'cat'):
-        """Tells a random fact about specified animal. Default is a cat."""
+    @command(name='fact', brief='Tells a random fact about animal.')
+    async def animal_fact(self, ctx: Context, animal: str = 'cat'):
+        """Tells a random fact about provided animal. Default is a cat."""
         await ctx.message.delete()
         
         if animal.lower() in ('dog', 'cat', 'panda', 'fox', 'koala', 'bird', 'racoon', 'kangaroo'):

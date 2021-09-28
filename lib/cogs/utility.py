@@ -19,11 +19,11 @@ class Utility(Cog):
         if not self.bot.ready:
             self.bot.cogs_ready.ready_up('utility')
 
-    @command(name='clear', aliases=['cl', 'purge'], brief='Clears messages from users.')
+    @command(name='clear', aliases=['cl', 'purge'], brief='Clears messages in current channel.')
     @has_permissions(manage_messages=True)
     @bot_has_permissions(manage_messages=True, read_message_history=True)
-    async def __clear_message(self, ctx: Context, targets: Greedy[Member], amount: Optional[int] = 1):
-        """Clears provided number of messages (default is 1) from profided list of members."""
+    async def clear_message(self, ctx: Context, targets: Greedy[Member], amount: Optional[int] = 1):
+        """Clears provided number of messages (default is 1) from profided list of members in current channel."""
         def _check(message: Message) -> bool:
             return not len(targets) or message.author in targets
         
@@ -39,16 +39,16 @@ class Utility(Cog):
                 await ctx.send(embed=embed, delete_after=5)
                 print(f'[SUCCESS] {len(deleted)} message(s) has been deleted.')
         else:
-            await ctx.send('The amount provided is not within acceptable range. Must be [1...1000].')
+            await ctx.send('The amount provided is not within acceptable range. Must be [1 <= N <= 1000].')
     
-    @__clear_message.error
+    @clear_message.error
     async def clear_message_error(self, ctx: Context, error):
         if isinstance(error, MissingPermissions):
             await ctx.send('Action forbidden, **<manage messages>** and **<read_message_history>** permissions needed.')
 
     @command(name='prefix', aliases=['pre', 'p'], brief='Changes command prefix.')
     @has_permissions(manage_guild=True)
-    async def __change_prefix(self, ctx: Context, prefix: str):
+    async def change_prefix(self, ctx: Context, prefix: str):
         """Changes command prefix."""
         if len(prefix) > 5:
             await ctx.send("Prefix can't be longer than 5 characters.")
@@ -59,7 +59,7 @@ class Utility(Cog):
             db.commit()
             await ctx.send(f'Command prefix set to [{prefix}].')
 
-    @__change_prefix.error
+    @change_prefix.error
     async def change_prefix_error(self, ctx: Context, error):
         if isinstance(error, MissingPermissions):
             await ctx.send('Action forbidden, you have no **<manage server>** permission.')

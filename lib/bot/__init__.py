@@ -8,10 +8,10 @@ from discord.ext.commands import (CommandNotFound,
                                   BadArgument,
                                   MissingRequiredArgument,
                                   CommandOnCooldown,
-                                  CheckFailure,
-                                  BotMissingPermissions)
+                                  CheckFailure)
 from discord.errors import HTTPException, Forbidden
-from discord.ext.commands import Context, when_mentioned_or
+from discord.ext.commands import (Context,
+                                  when_mentioned_or)
 
 from glob import glob
 from lib.db import db

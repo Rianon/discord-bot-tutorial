@@ -3,8 +3,8 @@ from typing import Optional
 from datetime import datetime
 
 from discord import Member, Embed
-from discord.ext.commands import Cog, Context, command
-from discord.ext.commands.errors import CheckFailure
+from discord.ext.commands import (Cog, Context,
+                                  command)
 
 from lib.bot import Bot
 
@@ -19,7 +19,7 @@ class Info(Cog):
             self.bot.cogs_ready.ready_up('info')
     
     @command(name='userinfo', aliases=['ui', 'mi', 'member info'], brief='Shows user info.')
-    async def __show_user_info(self, ctx: Context, target: Optional[Member]):
+    async def show_user_info(self, ctx: Context, target: Optional[Member]):
         """Shows user info."""
         await ctx.message.delete()
         
@@ -49,7 +49,7 @@ class Info(Cog):
         await ctx.send(embed=embed)
     
     @command(name='serverinfo', aliases=['si', 'gi', 'guildinfo'], brief='Shows server info.')
-    async def __show_server_info(self, ctx: Context):
+    async def show_server_info(self, ctx: Context):
         """Shows server info."""
         await ctx.message.delete()
         

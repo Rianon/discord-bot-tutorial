@@ -1,7 +1,8 @@
 from typing import Optional
 from discord.utils import get
 from discord import Embed
-from discord.ext.commands import Cog, Context, Command, command
+from discord.ext.commands import (Cog, Context, Command,
+                                  command)
 from discord.ext.menus import MenuPages, ListPageSource
 from lib.bot import Bot
 
@@ -69,7 +70,7 @@ class Help(Cog):
             self.bot.cogs_ready.ready_up('help')
 
     @command(name='help', aliases=['h'], brief='Shows help on commands.')
-    async def __show_help(self, ctx: Context, cmd: Optional[str]):
+    async def show_help(self, ctx: Context, cmd: Optional[str]):
         """Shows help on commands."""
         await ctx.message.delete()
 
