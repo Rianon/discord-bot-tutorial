@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 from typing import Optional, Union
 from asyncio import sleep
 from better_profanity import profanity
-import pytz
+from re import search
+# import pytz
 
 from discord import Member, TextChannel, Embed, Role, NotFound, Object, Message
 from discord.utils import find
@@ -37,11 +38,14 @@ class BannedUser(Converter):
 class Mod(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        self.url_regex = r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
+        self.allow_links = ('892892601202663464') # let allow link posting to, say, links channel only
+        self.allow_images = ('892892601202663464') # same channel, for images
 
     @Cog.listener()
     async def on_ready(self):
-        self.log_channel: TextChannel = self.bot.get_channel(825090188619022356)
-        self.mute_role: Role = self.bot.guild.get_role(888124084486041600)
+        self.log_channel: TextChannel = self.bot.get_channel(825090188619022356) # set log channel
+        self.mute_role: Role = self.bot.guild.get_role(888124084486041600) # set mute role
         
         if not self.bot.ready:
             self.bot.cogs_ready.ready_up('mod')
@@ -55,7 +59,13 @@ class Mod(Cog):
             if not str(message.content).startswith(str(current_prefix)):
                 if profanity.contains_profanity(message.content):
                     await message.delete()
-                    await message.channel.send("You can't use that word here.")
+                    await message.channel.send("You can't use that word here.", delete_after=5)
+                elif str(message.channel.id) not in self.allow_links and search(self.url_regex, message.content):
+                    await message.delete()
+                    await message.channel.send("You can't post links here.", delete_after=5)
+                if str(message.channel.id) not in self.allow_images and any([hasattr(a, 'width') for a in message.attachments]):
+                    await message.delete()
+                    await message.channel.send("You can't post images here.", delete_after=5)
     
     @command(name='kick', brief='Kicks user from server.')
     @bot_has_permissions(kick_members=True)
