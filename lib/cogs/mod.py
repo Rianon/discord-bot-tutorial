@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
-from typing import List, Optional, Union
+from typing import Optional, Union
 from asyncio import sleep
+from better_profanity import profanity
 import pytz
 
-from discord import Member, TextChannel, Embed, Role, NotFound, Object
+from discord import Member, TextChannel, Embed, Role, NotFound, Object, Message
 from discord.utils import find
 from discord.ext.commands import (Cog, Context, Converter,
                                   Greedy,
@@ -13,6 +14,8 @@ from discord.ext.commands.errors import MissingPermissions, BotMissingPermission
 from lib.bot import Bot
 from lib.db import db
 
+profanity.load_censor_words_from_file('./data/profanity.txt')
+# profanity.load_censor_words()
 
 class BannedUser(Converter):
 	async def convert(self, ctx: Context, arg: Union[int, str]):
@@ -42,6 +45,17 @@ class Mod(Cog):
         
         if not self.bot.ready:
             self.bot.cogs_ready.ready_up('mod')
+    
+    @Cog.listener()
+    async def on_message(self, message: Message):
+        if not message.author.bot:
+            current_prefix = await self.bot.get_prefix(message)
+            if isinstance(current_prefix, list):
+                current_prefix = current_prefix[-1]
+            if not str(message.content).startswith(str(current_prefix)):
+                if profanity.contains_profanity(message.content):
+                    await message.delete()
+                    await message.channel.send("You can't use that word here.")
     
     @command(name='kick', brief='Kicks user from server.')
     @bot_has_permissions(kick_members=True)
@@ -187,7 +201,7 @@ class Mod(Cog):
         elif isinstance(ctx, BotMissingPermissions):
             await ctx.send('Action forbidden, this bot has no **<manage roles>** permission.')
     
-    async def unmute(self, ctx: Context, targets: List[Member], *, reason='Mute has expired.' ):
+    async def unmute(self, ctx: Context, targets: Greedy[Member], *, reason='Mute has expired.' ):
         for target in targets:
             if self.mute_role in target.roles:
                 sql_query = 'SELECT RolesIDs FROM mutes WHERE UserID = ?'
@@ -230,6 +244,41 @@ class Mod(Cog):
             await ctx.send('Action forbidden, **<manage roles>** and **<manage server>** permissions needed.')
         elif isinstance(ctx, BotMissingPermissions):
             await ctx.send('Action forbidden, this bot has no **<manage roles>** permission.')
+    
+    @command(name='addprofanity', aliases=['as', 'ac'], brief='Add words to profanity filter.')
+    @has_permissions(manage_guild=True)
+    async def add_profanity(self, ctx: Context, *words):
+        """Add words to profanity filter."""
+        if ctx.message:
+            await ctx.message.delete()
+        
+        profanity.add_censor_words(words)
+        with open('./data/profanity.txt', 'a', encoding='utf-8') as f:
+            f.write(''.join([f'{w}\n' for w in words]))
+        
+        embed = Embed(title='Profanity filter updated.',
+                      color=0x00FF00)
+                
+        await ctx.send(embed=embed, delete_after=5)
+        print(f'[SUCCESS] Profanity filter updated.')
+
+    @command(name='removeprofanity', aliases=['rs', 'rc'], brief='Remove words from profanity filter.')
+    @has_permissions(manage_guild=True)
+    async def remove_profanity(self, ctx: Context, *words):
+        """Remove words from profanity filter."""
+        if ctx.message:
+            await ctx.message.delete()
+        
+        with open('./data/profanity.txt', 'r', encoding='utf-8') as f:
+            stored = [w.strip() for w in f.readlines()]
+        with open('./data/profanity.txt', 'w', encoding='utf-8') as f:
+            f.write(''.join([f'{w}\n' for w in stored if w not in words]))
+        
+        embed = Embed(title='Profanity filter updated.',
+                      color=0x00FF00)
+                
+        await ctx.send(embed=embed, delete_after=5)
+        print(f'[SUCCESS] Profanity filter updated.')
 
 
 def setup(bot: Bot):
