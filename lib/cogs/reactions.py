@@ -1,16 +1,19 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Union
 
-from discord.ext.commands import Cog
+from discord.ext.commands import Cog, command, has_permissions, Context
 from discord import Reaction, Member, User, RawReactionActionEvent, Message, Embed
 
 from lib.bot import Bot
 from lib.db import db
 
 
+numbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
+
 class Reactions(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        self.polls = []
             
     @Cog.listener()
     async def on_ready(self):
@@ -26,17 +29,42 @@ class Reactions(Cog):
             
             self.reaction_message: Message = await self.bot.get_channel(825080559369846789).fetch_message(893958842935803914)
             self.starboard_channel = self.bot.get_channel(894351653682163743)
-            assert self.reaction_message.content == 'React to get a colour!'
+            # assert self.reaction_message.content == 'React to get a colour!'
             self.bot.cogs_ready.ready_up('reactions')
     
-    # @Cog.listener()
-    # async def on_reaction_add(self, reaction: Reaction, user: Union[Member, User]):
-    #     print(f'{user.display_name} reacted with {reaction.emoji}. Event type: regular.')
-    
-    # @Cog.listener()
-    # async def on_reaction_remove(self, reaction: Reaction, user: Union[Member, User]):
-    #     print(f'{user.display_name} removed reaction {reaction.emoji}. Event type: regular.')
+    @command(name='createpoll', aliases=['mkpoll'], brief='Creates a poll.')
+    @has_permissions(manage_guild=True)
+    async def create_poll(self, ctx: Context, hours: int, question: str, *options):
+        """Creates a poll."""
+        if len(options) > 10:
+            await ctx.send('You can only supply a maximum of 10 options.')
+        else:
+            embed = Embed(title='Poll',
+                        description=question,
+                        colour=ctx.author.colour,
+                        timestamp=datetime.utcnow())
+                            
+            embed.add_field(name='Options', value='\n'.join([f"{numbers[idx]} {option}" for idx, option in enumerate(options)]), inline=False)
+            embed.add_field(name='Instructions', value='React to cast a vote!', inline=False)
+            
+            message = await ctx.send(embed=embed)
+            
+            for emoji in numbers[:len(options)]:
+                await message.add_reaction(emoji)
+            
+            self.polls.append((message.channel.id, message.id))
+            
+            self.bot.scheduler.add_job(self.complete_poll, trigger='date', run_date=datetime.now()+timedelta(seconds=hours),
+                                       args=[message.channel.id, message.id])
 
+    async def complete_poll(self, channel_id, message_id):
+	    message: Message = await self.bot.get_channel(channel_id).fetch_message(message_id)
+
+	    most_voted: Reaction = max(message.reactions, key=lambda r: r.count)
+
+	    await message.channel.send(f"The results are in and option {most_voted.emoji} was the most popular with {most_voted.count-1:,} votes!")
+	    self.polls.remove((message.channel.id, message.id))
+    
     @Cog.listener()
     async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
         if payload.message_id == self.reaction_message.id:
@@ -44,10 +72,20 @@ class Reactions(Cog):
             await payload.member.remove_roles(*current_colours)
             await payload.member.add_roles(self.colours[payload.emoji.name])
             await self.reaction_message.remove_reaction(payload.emoji, payload.member)
+        
+        elif payload.message_id in (poll[1] for poll in self.polls):
+            message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+
+            for reaction in message.reactions:
+                if (not payload.member.bot
+					and payload.member in await reaction.users().flatten()
+					and reaction.emoji != payload.emoji.name):
+                    await message.remove_reaction(reaction.emoji, payload.member)
+        
         elif payload.emoji.name == '⭐':
             message: Message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
                         
-            if not message.author.bot: # and payload.member.id != message.author.id:
+            if not message.author.bot and payload.member.id != message.author.id:
                 sql_query = 'SELECT StarMessageID, Stars FROM starboard WHERE RootMessageID = ?'
                 sql_data = message.id
                 msg_id, stars = db.record(sql_query, sql_data) or (None, 0)
