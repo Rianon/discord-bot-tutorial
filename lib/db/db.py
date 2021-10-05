@@ -27,10 +27,6 @@ def commit():
     print('[INFO] Commiting database...')
     
 
-def autosave(sched):
-    sched.add_job(commit, CronTrigger(minute=1, second=0))
-
-
 def close():
     cxn.close()
 

@@ -47,8 +47,6 @@ class Bot (BotBase):
         self.guild = None
         self.scheduler = AsyncIOScheduler()
 
-        db.autosave(self.scheduler)
-
         super().__init__(
             command_prefix=get_prefix,
             owner_ids=OWNER_IDS,
@@ -110,6 +108,7 @@ class Bot (BotBase):
         self.guild = self.get_guild(823649821679681546)
         self.scheduler.add_job(self.rules_reminder, CronTrigger(
             day_of_week=0, hour=12, minute=0, second=0))
+        self.scheduler.add_job(db.commit, CronTrigger(minute=5))
         self.scheduler.start()
         
         if not self.ready:
