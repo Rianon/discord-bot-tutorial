@@ -57,6 +57,24 @@ class Bot (BotBase):
         for cog in COGS:
             self.load_extension(f'lib.cogs.{cog}')
             print(f'[SUCCESS] {cog} cog loaded.')
+    
+    def update_db(self):
+        sql_query = 'INSERT OR IGNORE INTO guilds (GuildID) VALUES (?)'
+        db.multiexec(sql_query, ((guild.id,) for guild in self.guilds))
+        sql_query = 'INSERT OR IGNORE INTO exp (UserID) VALUES (?)'
+        db.multiexec(sql_query, ((member.id,) for member in self.guild.members if not member.bot))
+        
+        to_remove = []
+        sql_query = 'SELECT UserID FROM exp)'
+        stored_members = db.column('SELECT UserID FROM exp')
+        for id_ in stored_members:
+            if not self.guild.get_member(id_):
+                to_remove.append(id_)
+        
+        sql_query = 'DELETE FROM exp WHERE UserID = ?'
+        db.multiexec(sql_query, ((id_,) for id_ in to_remove))
+        
+        db.commit()
 
     def run(self, version):
         self.VERSION = version
@@ -110,6 +128,8 @@ class Bot (BotBase):
             day_of_week=0, hour=12, minute=0, second=0))
         self.scheduler.add_job(db.commit, CronTrigger(minute=5))
         self.scheduler.start()
+        
+        self.update_db()
         
         if not self.ready:
             while not self.cogs_ready.all_ready():
