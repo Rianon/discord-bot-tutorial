@@ -3,12 +3,43 @@ from typing import Optional
 from datetime import datetime, timedelta
 from random import randint
 
-from discord import Message, Member
+from discord import Message, Member, Embed
 from discord.ext.commands import Cog, command, Context
+from discord.ext.menus import MenuPages, ListPageSource
 
 from lib.bot import Bot
 from lib.db import db
 
+class LeaderBoard(ListPageSource):
+    def __init__(self, ctx: Context, data):
+        self.ctx = ctx
+        super().__init__(data, per_page=10)
+
+    async def write_page(self, menu, offset, fields=[]):
+        len_data = len(self.entries)
+
+        embed = Embed(title='**LEADERBOARD**',
+                      colour=self.ctx.author.colour)
+        embed.set_thumbnail(url=self.ctx.guild.icon_url)
+        footer_text = f'{offset:,} - {min(len_data, (offset + self.per_page - 1)):,} of {len_data:,} members.'
+        embed.set_footer(text=footer_text)
+
+        for name, value in fields:
+            embed.add_field(name=name, value=value, inline=False)
+
+        return embed
+
+    async def format_page(self, menu, entries):
+        offset = (menu.current_page*self.per_page) + 1        
+        fields = []
+
+        # for idx, entry in enumerate(entries):
+        #     member = self.ctx.guild.get_member(entry[0])
+        #     fields.append((f'#{idx+1}: {member.display_name}', f'XP: {entry[1]} | Level {entry[2]}'))
+        table = ('\n'.join(f'#{idx+offset}: {self.ctx.guild.get_member(entry[0]).display_name} (XP: {entry[1]} | Level {entry[2]})' for idx, entry in enumerate(entries)))
+        fields.append(('Ranks', table))
+
+        return await self.write_page(menu, offset, fields)
 
 class Exp(Cog):
     def __init__(self, bot: Bot):
@@ -60,6 +91,17 @@ class Exp(Cog):
             await ctx.send(f'{target.display_name} is rank {ids.index(target.id)+1} of {len(ids)}')
         except ValueError:
             await ctx.send("This member can't have a rank.")
+    
+    @command(name='keaderboard', aliases=['lb'], brief='Shows server leaderboard.')
+    async def show_leaderboard(self, ctx: Context):
+        """Shows server leaderboard."""
+        sql_query = 'SELECT UserID, XP, Level FROM exp ORDER BY XP DESC'
+        records = db.records(sql_query)
+        
+        menu = MenuPages(source=LeaderBoard(ctx, records),
+                         delete_reactions_after=True,
+                         timeout=60.0)
+        await menu.start(ctx)
     
     @Cog.listener()
     async def on_ready(self):
