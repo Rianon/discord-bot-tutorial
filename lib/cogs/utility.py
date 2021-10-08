@@ -1,14 +1,13 @@
-from discord import Embed, Member, Message
-from discord.ext.commands import (Cog, Context,
-                                  Greedy,
-                                  command, has_permissions, bot_has_permissions)
-from discord.ext.commands.errors import MissingPermissions
+from datetime import datetime, timedelta
+from typing import Optional
 
+from discord import Embed, Member, Message
+from discord.ext.commands import (Cog, Context, Greedy, bot_has_permissions,
+                                  command, has_permissions)
+from discord.ext.commands.errors import MissingPermissions
 from lib.bot import Bot
 from lib.db import db
 
-from typing import Optional
-from datetime import datetime, timedelta
 
 class Utility(Cog):
     def __init__(self, bot: Bot):
@@ -53,10 +52,10 @@ class Utility(Cog):
         if len(prefix) > 5:
             await ctx.send("Prefix can't be longer than 5 characters.")
         else:
-            sql_update_query = 'UPDATE guilds SET Prefix = ? WHERE GuildID = ?'
-            sql_update_data = (prefix, ctx.guild.id)
-            db.execute(sql_update_query, *sql_update_data)
+            sql_query = 'UPDATE guilds SET Prefix = ? WHERE GuildID = ?'
+            db.execute(sql_query, prefix, ctx.guild.id)
             db.commit()
+            
             await ctx.send(f'Command prefix set to [{prefix}].')
 
     @change_prefix.error

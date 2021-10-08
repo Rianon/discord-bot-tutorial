@@ -1,20 +1,18 @@
+from asyncio import sleep
 from datetime import datetime
+from glob import glob
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from asyncio import sleep
 
-from discord import Intents, TextChannel, Message, DMChannel, Embed, Member
+from discord import DMChannel, Embed, Intents, Member, Message, TextChannel
+from discord.errors import Forbidden, HTTPException
+from discord.ext.commands import BadArgument
 from discord.ext.commands import Bot as BotBase
-from discord.ext.commands import (CommandNotFound,
-                                  BadArgument,
-                                  MissingRequiredArgument,
-                                  CommandOnCooldown,
-                                  CheckFailure)
-from discord.errors import HTTPException, Forbidden
-from discord.ext.commands import (Context, Cog,
-                                  when_mentioned_or)
+from discord.ext.commands import (CheckFailure, Cog, CommandNotFound,
+                                  CommandOnCooldown, Context,
+                                  MissingRequiredArgument, when_mentioned_or)
 
-from glob import glob
 from lib.db import db
 
 OWNER_IDS = [341671286415687692]
@@ -22,8 +20,7 @@ COGS = [path.split('\\')[-1][:-3] for path in glob('./lib/cogs/*.py')]
 
 def get_prefix(bot, message):
     sql_query = 'SELECT Prefix FROM guilds WHERE GuildID = ?'
-    sql_data = message.guild.id
-    prefix = db.field(sql_query, sql_data)
+    prefix = db.field(sql_query, message.guild.id)
     return when_mentioned_or(prefix)(bot, message)
 
 
@@ -136,6 +133,9 @@ class Bot (BotBase):
                 await sleep(0.2)
             self.ready = True
             print('[INFO] Bot is ready.')
+            
+            meta = self.get_cog('Meta')
+            await meta.set()
         else:
             print('[INFO] Bot reconnected.')
 
