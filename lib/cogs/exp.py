@@ -33,9 +33,6 @@ class LeaderBoard(ListPageSource):
         offset = (menu.current_page*self.per_page) + 1        
         fields = []
 
-        # for idx, entry in enumerate(entries):
-        #     member = self.ctx.guild.get_member(entry[0])
-        #     fields.append((f'#{idx+1}: {member.display_name}', f'XP: {entry[1]} | Level {entry[2]}'))
         table = ('\n'.join(f'#{idx+offset}: {self.ctx.guild.get_member(entry[0]).display_name} (XP: {entry[1]} | Level {entry[2]})' for idx, entry in enumerate(entries)))
         fields.append(('Ranks', table))
 
@@ -49,7 +46,6 @@ class Exp(Cog):
     async def process_xp(self, message: Message):
         sql_query = 'SELECT XP, Level, XPLock FROM exp WHERE UserID = ?'
         xp, level, xplock = db.record(sql_query, message.author.id)
-        # print(f'From database[exp, {message.author}]: XP={xp}, Level={level}, XPLock={xplock}') # Some debug data
         
         if datetime.utcnow() > datetime.fromisoformat(xplock):
             await self.add_xp(message, xp, level)
@@ -57,7 +53,6 @@ class Exp(Cog):
     async def add_xp(self, message: Message, xp: int, level: int):
         xp_to_add = randint(10, 20)
         new_level = int(((xp + xp_to_add)//42)**0.55)
-        # print(f'Added XP={xp_to_add}, new level={new_level}') # Some debug data
         
         sql_query = 'UPDATE exp SET XP = XP + ?, Level = ?, XPLock = ? WHERE UserID = ?'
         xplock = (datetime.utcnow()+timedelta(seconds=self.xp_delta)).isoformat()
@@ -92,7 +87,7 @@ class Exp(Cog):
         except ValueError:
             await ctx.send("This member can't have a rank.")
     
-    @command(name='keaderboard', aliases=['lb'], brief='Shows server leaderboard.')
+    @command(name='leaderboard', aliases=['lb'], brief='Shows server leaderboard.')
     async def show_leaderboard(self, ctx: Context):
         """Shows server leaderboard."""
         sql_query = 'SELECT UserID, XP, Level FROM exp ORDER BY XP DESC'
@@ -111,7 +106,7 @@ class Exp(Cog):
     @Cog.listener()
     async def on_message(self, message: Message):
         if not message.author.bot:
-            await self.process_xp(message)
+            await self.process_xp(message) # Add some XP for activity
 
 
 def setup(bot: Bot):

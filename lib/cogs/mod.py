@@ -20,7 +20,7 @@ profanity.load_censor_words_from_file('./data/profanity.txt')
 # profanity.load_censor_words()
 
 class BannedUser(Converter):
-	async def convert(self, ctx: Context, arg: Union[int, str]):
+	async def convert(self, ctx: Context, arg: int | str):
 		if ctx.guild.me.guild_permissions.ban_members:
 			if arg.isdigit():
 				try:
@@ -100,7 +100,7 @@ class Mod(Cog):
     @command(name='kick', brief='Kicks user from server.')
     @bot_has_permissions(kick_members=True)
     @has_permissions(kick_members=True)
-    async def kick_command(self, ctx: Context, targets: Greedy[Member], *, reason: Optional[str] = 'No reason provided.'):
+    async def kick_command(self, ctx: Context, targets: Greedy[Member], *, reason: str = 'No reason provided.'):
         """Kicks provided user(s) from server."""
         await ctx.message.delete()
         
@@ -137,7 +137,7 @@ class Mod(Cog):
     @command(name='ban', brief='Bans user from server.')
     @bot_has_permissions(ban_members=True)
     @has_permissions(ban_members=True)
-    async def ban_command(self, ctx: Context, targets: Greedy[Member], *, reason: Optional[str] = 'No reason provided.'):
+    async def ban_command(self, ctx: Context, targets: Greedy[Member], *, reason: str = 'No reason provided.'):
         """Bans provided user(s) from server."""
         await ctx.message.delete()
         
@@ -157,7 +157,7 @@ class Mod(Cog):
     @command(name="unban", brief='Unbans the user.')
     @bot_has_permissions(ban_members=True)
     @has_permissions(ban_members=True)
-    async def unban(self, ctx: Context, targets: Greedy[BannedUser], *, reason: Optional[str] = 'No reason provided.'):
+    async def unban(self, ctx: Context, targets: Greedy[BannedUser], *, reason: str = 'No reason provided.'):
         """Unbans the provided user(s) by their name or ID."""
         if not len(targets):
             await ctx.send('One or more required arguments are missing.')
@@ -221,7 +221,7 @@ class Mod(Cog):
     @command(name='mute', brief='Mutes the user.')
     @has_permissions(manage_roles=True, manage_guild=True)
     @bot_has_permissions(manage_roles=True)
-    async def mute_command(self, ctx: Context, targets: Greedy[Member], hours: Optional[int], *, reason: Optional[str] = 'No reason provided.'):
+    async def mute_command(self, ctx: Context, targets: Greedy[Member], hours: Optional[int], *, reason: str = 'No reason provided.'):
         """Mutes the provided user(s) for provided duration."""
         if not len(targets):
             await ctx.send('One or more required arguments are missing.')
@@ -278,7 +278,7 @@ class Mod(Cog):
             await self.unmute(ctx.message, targets, reason)
         
     @unmute_command.error
-    async def mute_member_error(self, ctx: Context, error):
+    async def unmute_member_error(self, ctx: Context, error):
         if isinstance(error, MissingPermissions):
             await ctx.send('Action forbidden, **<manage roles>** and **<manage server>** permissions needed.')
         elif isinstance(ctx, BotMissingPermissions):

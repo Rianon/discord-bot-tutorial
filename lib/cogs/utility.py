@@ -21,7 +21,7 @@ class Utility(Cog):
     @command(name='clear', aliases=['cl', 'purge'], brief='Clears messages in current channel.')
     @has_permissions(manage_messages=True)
     @bot_has_permissions(manage_messages=True, read_message_history=True)
-    async def clear_message(self, ctx: Context, targets: Greedy[Member], amount: Optional[int] = 1):
+    async def clear_message(self, ctx: Context, targets: Greedy[Member], amount: int = 1):
         """Clears provided number of messages (default is 1) from profided list of members in current channel."""
         def _check(message: Message) -> bool:
             return not len(targets) or message.author in targets

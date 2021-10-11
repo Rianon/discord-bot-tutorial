@@ -1,6 +1,5 @@
 from os.path import isfile
 from sqlite3 import connect
-from apscheduler.triggers.cron import CronTrigger
 
 DB_PATH = './data/db/database.db'
 BUILD_PATH = './data/db/build.sql'
@@ -24,11 +23,17 @@ def build():
 
 def commit():
     cxn.commit()
-    print('[INFO] Commiting database...')
+    print('[INFO] Commiting to database...')
     
 
 def close():
-    cxn.close()
+    print('[INFO] Closing database connection...')
+    try:
+        cur.close()
+        cxn.close()
+        print('[SUCCESS] Database connection closed.')
+    except:
+        print('[ERROR] Failed closing database connection.')
 
 
 def field(command, *values):

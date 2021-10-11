@@ -2,8 +2,8 @@ from asyncio import sleep
 from datetime import datetime
 from glob import glob
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
+from apscheduler.schedulers.asyncio import AsyncIOScheduler #type: ignore
+from apscheduler.triggers.cron import CronTrigger #type: ignore
 
 from discord import DMChannel, Embed, Intents, Member, Message, TextChannel
 from discord.errors import Forbidden, HTTPException
